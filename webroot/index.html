@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="color-scheme" content="dark" />
+  <title>QRTX • Control Center</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="ambient" aria-hidden="true">
+      <div class="glow g1"></div>
+      <div class="glow g2"></div>
+      <div class="glow g3"></div>
+    </div>
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <img src="icon.png" alt="QRTX" class="brand-logo" />
+        </div>
+        <div class="brand-meta">
+          <h1>QRTX</h1>
+          <span data-i18n="subtitle">Control Center</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" class="icon-btn" id="tgBtn" aria-label="Telegram">
+          <i data-lucide="send"></i>
+        </button>
+        <button type="button" class="icon-btn" id="settingsBtn" aria-label="Settings">
+          <i data-lucide="settings"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero glass">
+      <div class="hero-battery">
+        <div class="ring-wrap">
+          <svg class="ring-svg" viewBox="0 0 100 100">
+            <circle class="ring-track" cx="50" cy="50" r="40" />
+            <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="40" />
+          </svg>
+          <div class="ring-center">
+            <i data-lucide="battery-charging" id="batIcon"></i>
+            <strong id="batPct">--%</strong>
+          </div>
+        </div>
+      </div>
+      <div class="hero-info">
+        <span class="hero-label" data-i18n="active_mode">Active Mode</span>
+        <div class="hero-mode">
+          <div class="hero-sticker" id="modeStickerWrap">
+            <video id="modeSticker" autoplay loop muted playsinline></video>
+          </div>
+          <span class="hero-name" id="modeName">Auto</span>
+        </div>
+        <div class="hero-tags">
+          <span class="tag live"><span class="pulse"></span> <span data-i18n="live">Live</span></span>
+          <span class="tag">v1.0.0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODES -->
+    <section class="block" id="modesSection">
+      <div class="block-head">
+        <i data-lucide="gauge"></i>
+        <h2 data-i18n="perf_mode">Performance Mode</h2>
+      </div>
+      <div class="modes" id="modeGrid" role="listbox">
+        <button type="button" class="mode" data-mode="lite" role="option">
+          <div class="mode-visual">
+            <video class="mode-vid" data-sticker="0" autoplay loop muted playsinline></video>
+          </div>
+          <div class="mode-text">
+            <strong data-i18n="mode_lite">Lite</strong>
+            <small data-i18n="mode_lite_desc">Power efficient</small>
+          </div>
+          <div class="mode-tick"><i data-lucide="check"></i></div>
+        </button>
+
+        <button type="button" class="mode" data-mode="performance" role="option">
+          <div class="mode-visual">
+            <video class="mode-vid" data-sticker="1" autoplay loop muted playsinline></video>
+          </div>
+          <div class="mode-text">
+            <strong data-i18n="mode_perf">Performance</strong>
+            <small data-i18n="mode_perf_desc">Maximum speed</small>
+          </div>
+          <div class="mode-tick"><i data-lucide="check"></i></div>
+        </button>
+
+        <button type="button" class="mode active" data-mode="auto" role="option" aria-selected="true">
+          <div class="mode-visual">
+            <video class="mode-vid" data-sticker="2" autoplay loop muted playsinline></video>
+          </div>
+          <div class="mode-text">
+            <strong data-i18n="mode_auto">Auto</strong>
+            <small data-i18n="mode_auto_desc">Smart balancing</small>
+          </div>
+          <div class="mode-tick"><i data-lucide="check"></i></div>
+        </button>
+
+        <button type="button" class="mode" data-mode="battery" role="option">
+          <div class="mode-visual">
+            <video class="mode-vid" data-sticker="3" autoplay loop muted playsinline></video>
+          </div>
+          <div class="mode-text">
+            <strong data-i18n="mode_batt">Battery</strong>
+            <small data-i18n="mode_batt_desc">Deep saver</small>
+          </div>
+          <div class="mode-tick"><i data-lucide="check"></i></div>
+        </button>
+      </div>
+    </section>
+
+    <!-- QUICK ACTIONS -->
+    <section class="block" id="actionsSection">
+      <div class="block-head">
+        <i data-lucide="sparkles"></i>
+        <h2 data-i18n="quick_actions">Quick Actions</h2>
+      </div>
+      <div class="chips">
+        <button type="button" class="chip" id="openChannel">
+          <i data-lucide="send"></i>
+          <span data-i18n="telegram">Telegram</span>
+        </button>
+        <button type="button" class="chip" id="refreshBtn">
+          <i data-lucide="refresh-cw"></i>
+          <span data-i18n="refresh">Refresh</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ABOUT CARD (main view) -->
+    <section class="about glass" id="aboutMain">
+      <div class="about-top">
+        <i data-lucide="shield-check"></i>
+        <span>QRTX Module</span>
+      </div>
+      <p data-i18n="about_desc">Pure AMOLED performance dashboard. Optimized for Magisk, KernelSU, APatch, SukiSU & more.</p>
+      <div class="about-bottom">
+        <span data-i18n="crafted">Crafted by <b>DREAM_WAS</b></span>
+        <a href="https://t.me/uwEspresso" class="tg-link" id="channelLink">t.me/uwEspresso</a>
+      </div>
+    </section>
+
+    <div class="safe-area"></div>
+  </div>
+
+  <!-- ========== SETTINGS PANEL ========== -->
+  <div class="settings-overlay" id="settingsOverlay" hidden>
+    <div class="settings-panel glass">
+      <div class="settings-header">
+        <h2 data-i18n="settings">Settings</h2>
+        <button type="button" class="icon-btn" id="closeSettings" aria-label="Close">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <div class="settings-body">
+        <!-- Theme / Accent Color -->
+        <div class="set-group">
+          <div class="set-label">
+            <i data-lucide="palette"></i>
+            <span data-i18n="text_theme">Text Theme</span>
+          </div>
+          <div class="color-grid" id="colorGrid">
+            <button type="button" class="color-swatch" data-color="#a78bfa" style="--c:#a78bfa" title="Purple"></button>
+            <button type="button" class="color-swatch" data-color="#c4b5fd" style="--c:#c4b5fd" title="Lavender"></button>
+            <button type="button" class="color-swatch" data-color="#fb923c" style="--c:#fb923c" title="Orange"></button>
+            <button type="button" class="color-swatch" data-color="#facc15" style="--c:#facc15" title="Yellow"></button>
+            <button type="button" class="color-swatch" data-color="#ef4444" style="--c:#ef4444" title="Red"></button>
+            <button type="button" class="color-swatch" data-color="#f87171" style="--c:#f87171" title="Coral Red"></button>
+            <button type="button" class="color-swatch" data-color="#1d4ed8" style="--c:#1d4ed8" title="Deep Blue"></button>
+            <button type="button" class="color-swatch" data-color="#38bdf8" style="--c:#38bdf8" title="Sky Blue"></button>
+            <button type="button" class="color-swatch" data-color="#ec4899" style="--c:#ec4899" title="Pink"></button>
+            <button type="button" class="color-swatch" data-color="#d946ef" style="--c:#d946ef" title="Magenta"></button>
+            <button type="button" class="color-swatch" data-color="#f9a8d4" style="--c:#f9a8d4" title="Sakura"></button>
+            <button type="button" class="color-swatch" data-color="#2dd4bf" style="--c:#2dd4bf" title="Teal"></button>
+          </div>
+        </div>
+
+        <!-- Language -->
+        <div class="set-group">
+          <div class="set-label">
+            <i data-lucide="languages"></i>
+            <span data-i18n="language">Language</span>
+          </div>
+          <div class="lang-list" id="langList">
+            <button type="button" class="lang-btn active" data-lang="en">English</button>
+            <button type="button" class="lang-btn" data-lang="zh">中文 (Chinese)</button>
+            <button type="button" class="lang-btn" data-lang="ru">Русский (Russian)</button>
+            <button type="button" class="lang-btn" data-lang="ja">日本語 (Japanese)</button>
+            <button type="button" class="lang-btn" data-lang="pt">Português (Brazil)</button>
+          </div>
+        </div>
+
+        <!-- About inside settings -->
+        <div class="set-group">
+          <div class="set-label">
+            <i data-lucide="info"></i>
+            <span data-i18n="about">About</span>
+          </div>
+          <div class="about-box">
+            <p><strong>QRTX v1.0.0</strong></p>
+            <p data-i18n="about_full">Premium Pure AMOLED WebUI performance module by DREAM_WAS. Supports Magisk, Magisk Delta, KernelSU, KernelSU Next, APatch, SukiSU and more.</p>
+            <a href="https://t.me/uwEspresso" class="tg-link" id="settingsTg">t.me/uwEspresso</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
