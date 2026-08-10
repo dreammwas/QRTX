@@ -11,7 +11,11 @@
 
 ## About QRTX
 
-**QRTX** is a premium Magisk / KernelSU module with a pure AMOLED WebUI. It gives you clean performance mode control (Lite / Performance / Auto / Battery), custom accent colors, multi-language support and a modern glass-style interface — while staying lightweight and battery-friendly for daily use.
+**QRTX** is a dynamic performance module designed to improve gaming experience while keeping everyday usage smooth and battery-friendly.
+
+It features a modern Pure AMOLED WebUI with multiple performance modes (Lite, Performance, Auto, Battery), custom theme colors, multi-language support, and a clean glass-style interface — giving you full control without unnecessary complexity.
+
+Perfect for users who want better performance without sacrificing daily usability.
 
 Join the community: [t.me/uwEspresso](https://t.me/uwEspresso)
 
