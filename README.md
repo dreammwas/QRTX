@@ -31,13 +31,19 @@ Join the community: [t.me/uwEspresso](https://t.me/uwEspresso)
 
 ## Features
 
-- Pure AMOLED (`#000000`) WebUI
-- 4 Performance Modes (Lite / Performance / Auto / Battery)
-- Custom Text Theme colors (Purple, Lavender, Orange, Yellow, Red, Coral, Deep Blue, Sky Blue, Pink, Magenta, Sakura...)
-- Multi-language: English, Chinese, Russian, Japanese, Portuguese (Brazil)
-- Animated stickers support
+- **Performance Modes**
+  - Lite → Power efficient for light tasks
+  - Performance → Maximum speed for heavy games
+  - Auto → Smart balancing between performance & battery
+  - Battery → Deep power saving
+
+- Pure AMOLED WebUI designed for modern devices
+- Custom accent theme colors (Purple, Lavender, Orange, Yellow, Red, Coral, Deep Blue, Sky Blue, Pink, Magenta, Sakura...)
+- Multi-language support (English, Chinese, Russian, Japanese, Portuguese)
+- Animated sticker support in WebUI
 - Auto open Telegram channel on first install
-- Clean glassmorphism design
+- Lightweight & clean design focused on gaming experience
+
 
 ## Resources
 
