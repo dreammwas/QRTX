@@ -1,6 +1,6 @@
 #!/system/bin/sh
 #
-# QRT Action Script - Launch WebUI
+# QRTX Action Script - Launch WebUI
 #
 
 MODID=qrtx
