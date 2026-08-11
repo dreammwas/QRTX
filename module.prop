@@ -1,9 +1,9 @@
 id=qrtx
 name=QRTX
-version=v1.0.0
-versionCode=100
+version=v1.0.2
+versionCode=102
 author=DREAM_WAS
-description=QRTX - Premium Performance Control Center with Pure AMOLED WebUI.
+description=QRTX starting... | Open WebUI to select mode
 updateJson=
 banner=
 webuiIcon=webroot/icon.png
