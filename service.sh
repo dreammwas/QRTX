@@ -1,46 +1,67 @@
 #!/system/bin/sh
 #
-# QRTX Service Script
-# Copyright (C) 2026 DREAM_WAS
+# QRTX Service v1.0.2
 #
 
 MODDIR=${0%/*}
 CONFIG_DIR="/data/adb/.config/qrtx"
 LOG="$CONFIG_DIR/qrtx.log"
+MODE_FILE="$CONFIG_DIR/mode"
 
 mkdir -p "$CONFIG_DIR"
 
-# Wait for boot completed
 while [ "$(getprop sys.boot_completed)" != "1" ]; do
   sleep 3
 done
+sleep 8
 
-sleep 5
-
-# Log start
 echo "$(date): QRTX service started" >> "$LOG"
 
-# First run telegram (if not done)
+# Ensure qrtx is executable
+[ -x /system/bin/qrtx ] || chmod 755 "$MODDIR/system/bin/qrtx" 2>/dev/null
+export PATH="$MODDIR/system/bin:/system/bin:$PATH"
+
+# First-run Telegram (once)
 if [ -f "$CONFIG_DIR/config.json" ]; then
-  FIRST_RUN=$(grep -o '"first_run": *true' "$CONFIG_DIR/config.json" || true)
-  if [ -n "$FIRST_RUN" ]; then
+  if grep -q '"first_run": *true' "$CONFIG_DIR/config.json" 2>/dev/null; then
     am start -a android.intent.action.VIEW -d "https://t.me/uwEspresso" >/dev/null 2>&1 || true
-    # Mark as done
     sed -i 's/"first_run": *true/"first_run": false/' "$CONFIG_DIR/config.json" 2>/dev/null || true
   fi
 fi
 
-# Simple performance helper (example tweaks - safe defaults)
-# These are basic and reversible. For advanced like Encore, more complex daemon needed.
+# Load saved mode or default auto
+MODE="auto"
+[ -f "$MODE_FILE" ] && MODE=$(cat "$MODE_FILE")
+[ -z "$MODE" ] && MODE="auto"
 
-apply_basic_tweaks() {
-  # Example: set a balanced governor if available
-  for gov in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
-    [ -f "$gov" ] && echo "schedutil" > "$gov" 2>/dev/null || true
-  done
-}
+# Apply mode
+if command -v qrtx >/dev/null 2>&1; then
+  qrtx apply "$MODE" >> "$LOG" 2>&1
+elif [ -x "$MODDIR/system/bin/qrtx" ]; then
+  "$MODDIR/system/bin/qrtx" apply "$MODE" >> "$LOG" 2>&1
+else
+  echo "$(date): qrtx binary missing" >> "$LOG"
+  # fallback update prop
+  if [ -f "$MODDIR/module.prop" ]; then
+    sed -i 's|^description=.*|description=✗ Not working | qrtx binary missing|' "$MODDIR/module.prop"
+  fi
+fi
 
-# Only apply if user enabled (placeholder)
-# apply_basic_tweaks
+echo "$(date): QRTX service ready (mode=$MODE)" >> "$LOG"
 
-echo "$(date): QRTX service ready" >> "$LOG"
+# Lightweight watcher: re-apply when mode file changes
+LAST=""
+[ -f "$MODE_FILE" ] && LAST=$(cat "$MODE_FILE")
+while true; do
+  sleep 15
+  [ -f "$MODE_FILE" ] || continue
+  CUR=$(cat "$MODE_FILE")
+  if [ "$CUR" != "$LAST" ] && [ -n "$CUR" ]; then
+    LAST="$CUR"
+    if command -v qrtx >/dev/null 2>&1; then
+      qrtx apply "$CUR" >> "$LOG" 2>&1
+    elif [ -x "$MODDIR/system/bin/qrtx" ]; then
+      "$MODDIR/system/bin/qrtx" apply "$CUR" >> "$LOG" 2>&1
+    fi
+  fi
+done
