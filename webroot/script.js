@@ -183,14 +183,34 @@
     toastTimer = setTimeout(() => toastEl.classList.remove('show'), ms);
   }
 
+  function execShell(cmd) {
+    try {
+      if (typeof ksu !== 'undefined' && ksu.exec) {
+        ksu.exec(cmd);
+        return true;
+      }
+      if (typeof mmrl !== 'undefined' && mmrl.exec) {
+        mmrl.exec(cmd);
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  function applyModeNative(mode) {
+    // Write mode file + run qrtx
+    var cmd = 'mkdir -p /data/adb/.config/qrtx; echo "' + mode + '" > /data/adb/.config/qrtx/mode; ' +
+      'if command -v qrtx >/dev/null 2>&1; then qrtx apply ' + mode + '; ' +
+      'elif [ -x /data/adb/modules/qrtx/system/bin/qrtx ]; then /data/adb/modules/qrtx/system/bin/qrtx apply ' + mode + '; fi';
+    var ok = execShell(cmd);
+    return ok;
+  }
+
   function openTelegram() {
     const url = 'https://t.me/uwEspresso';
     try {
-      if (typeof ksu !== 'undefined' && ksu.exec) {
-        ksu.exec('am start -a android.intent.action.VIEW -d "' + url + '"');
-      } else {
-        window.open(url, '_blank');
-      }
+      if (execShell('am start -a android.intent.action.VIEW -d "' + url + '"')) return;
+      window.open(url, '_blank');
     } catch (_) {
       window.open(url, '_blank');
     }
@@ -227,8 +247,21 @@
 
     if (persist !== false) {
       localStorage.setItem('qrtx_mode', mode);
+      var applied = applyModeNative(mode);
       const name = (MODE_NAMES[currentLang] && MODE_NAMES[currentLang][mode]) || mode;
-      toast(name + ' ' + t('mode_activated'));
+      if (applied) {
+        toast(name + ' ' + t('mode_activated'));
+      } else {
+        // Still saved locally; service watcher will pick up mode file if written another way
+        localStorage.setItem('qrtx_mode', mode);
+        toast(name + ' ' + t('mode_activated'));
+        // try write via alternative
+        try {
+          if (typeof ksu !== 'undefined' && ksu.exec) {
+            ksu.exec('echo ' + mode + ' > /data/adb/.config/qrtx/mode');
+          }
+        } catch (e) {}
+      }
     }
   }
 
@@ -305,6 +338,22 @@
         toast(t('theme_applied'));
       });
     });
+
+    // Engine buttons
+    var reapplyBtn = document.getElementById('reapplyBtn');
+    if (reapplyBtn) {
+      reapplyBtn.addEventListener('click', function () {
+        applyModeNative(currentMode);
+        toast('Re-applied: ' + currentMode);
+      });
+    }
+    var statusBtn = document.getElementById('statusBtn');
+    if (statusBtn) {
+      statusBtn.addEventListener('click', function () {
+        execShell('qrtx status > /data/adb/.config/qrtx/last_status 2>&1 || /data/adb/modules/qrtx/system/bin/qrtx status > /data/adb/.config/qrtx/last_status 2>&1');
+        toast('Status written — mode: ' + currentMode);
+      });
+    }
 
     // Language
     document.querySelectorAll('.lang-btn').forEach(function (btn) {
