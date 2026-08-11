@@ -1,0 +1,158 @@
+#!/system/bin/sh
+#
+# QRTX Controller v1.0.2
+# Applies performance modes safely across SoCs
+#
+
+CONFIG_DIR="/data/adb/.config/qrtx"
+MODE_FILE="$CONFIG_DIR/mode"
+STATUS_FILE="$CONFIG_DIR/status"
+LOG="$CONFIG_DIR/qrtx.log"
+MODPROP=""
+
+# Find module.prop
+for p in /data/adb/modules/qrtx/module.prop /data/adb/modules_update/qrtx/module.prop; do
+  [ -f "$p" ] && MODPROP="$p" && break
+done
+
+log() {
+  echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"
+}
+
+mkdir -p "$CONFIG_DIR"
+
+write_gov() {
+  gov="$1"
+  for f in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+    [ -f "$f" ] || continue
+    chmod 644 "$f" 2>/dev/null
+    echo "$gov" > "$f" 2>/dev/null
+  done
+}
+
+pick_gov() {
+  # $1 $2 $3... preferred governors
+  avail=""
+  [ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors ] && \
+    avail=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors)
+  for g in "$@"; do
+    echo "$avail" | grep -qw "$g" && echo "$g" && return 0
+  done
+  # fallback first available
+  echo "$avail" | awk '{print $1; exit}'
+}
+
+set_min_freq_ratio() {
+  # ratio 0-100 of max as min (approx)
+  ratio="$1"
+  for cpu in /sys/devices/system/cpu/cpu[0-9]*; do
+    [ -d "$cpu/cpufreq" ] || continue
+    maxf=$(cat "$cpu/cpufreq/cpuinfo_max_freq" 2>/dev/null) || continue
+    minf=$(cat "$cpu/cpufreq/cpuinfo_min_freq" 2>/dev/null) || continue
+    target=$(( maxf * ratio / 100 ))
+    [ "$target" -lt "$minf" ] && target=$minf
+    [ "$target" -gt "$maxf" ] && target=$maxf
+    chmod 644 "$cpu/cpufreq/scaling_min_freq" 2>/dev/null
+    echo "$target" > "$cpu/cpufreq/scaling_min_freq" 2>/dev/null || true
+  done
+}
+
+set_io() {
+  sched="$1"
+  for q in /sys/block/sd*/queue/scheduler /sys/block/mmcblk*/queue/scheduler /sys/block/dm-*/queue/scheduler; do
+    [ -f "$q" ] || continue
+    echo "$sched" > "$q" 2>/dev/null || true
+  done
+}
+
+update_prop() {
+  mode="$1"
+  ok="$2"
+  if [ -n "$MODPROP" ] && [ -f "$MODPROP" ]; then
+    if [ "$ok" = "1" ]; then
+      desc="✓ Working | Mode: $mode | QRTX v1.0.2"
+    else
+      desc="✗ Not working | Mode: $mode | Check log"
+    fi
+    # portable replace description line
+    if grep -q '^description=' "$MODPROP"; then
+      sed -i "s|^description=.*|description=$desc|" "$MODPROP"
+    else
+      echo "description=$desc" >> "$MODPROP"
+    fi
+  fi
+  echo "$ok|$mode|$(date +%s)" > "$STATUS_FILE"
+}
+
+apply_mode() {
+  mode=$(echo "$1" | tr 'A-Z' 'a-z')
+  [ -z "$mode" ] && mode="auto"
+  ok=1
+
+  case "$mode" in
+    performance)
+      g=$(pick_gov performance schedutil walt sugov_ext schedhorizon interactive)
+      write_gov "$g"
+      set_min_freq_ratio 60
+      set_io "deadline"
+      log "Applied PERFORMANCE (gov=$g)"
+      ;;
+    lite)
+      g=$(pick_gov schedutil walt interactive conservative ondemand)
+      write_gov "$g"
+      set_min_freq_ratio 20
+      set_io "cfq"
+      log "Applied LITE (gov=$g)"
+      ;;
+    battery)
+      g=$(pick_gov powersave conservative schedutil)
+      write_gov "$g"
+      set_min_freq_ratio 10
+      set_io "noop"
+      log "Applied BATTERY (gov=$g)"
+      ;;
+    auto|*)
+      mode="auto"
+      g=$(pick_gov schedutil walt sugov_ext schedhorizon interactive ondemand)
+      write_gov "$g"
+      set_min_freq_ratio 30
+      set_io "deadline"
+      log "Applied AUTO (gov=$g)"
+      ;;
+  esac
+
+  # verify at least one governor write possible
+  cur=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null)
+  [ -z "$cur" ] && ok=0
+
+  echo "$mode" > "$MODE_FILE"
+  update_prop "$mode" "$ok"
+  echo "OK mode=$mode gov=$cur"
+}
+
+status() {
+  mode="auto"
+  [ -f "$MODE_FILE" ] && mode=$(cat "$MODE_FILE")
+  st="unknown"
+  [ -f "$STATUS_FILE" ] && st=$(cat "$STATUS_FILE")
+  cur=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null || echo n/a)
+  echo "mode=$mode"
+  echo "status=$st"
+  echo "governor=$cur"
+}
+
+case "$1" in
+  apply)
+    apply_mode "$2"
+    ;;
+  performance|lite|battery|auto)
+    apply_mode "$1"
+    ;;
+  status)
+    status
+    ;;
+  *)
+    echo "QRTX v1.0.2 — usage: qrtx [apply <mode>|performance|lite|auto|battery|status]"
+    status
+    ;;
+esac
